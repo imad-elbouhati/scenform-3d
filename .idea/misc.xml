@@ -3,8 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/hp/AndroidStudioProjects/HelloScenform/app/src/main/res/drawable/border_drawble.xml" value="0.1825" />
         <entry key="..\:/Users/hp/AndroidStudioProjects/HelloScenform/app/src/main/res/layout/activity_main.xml" value="0.1" />
-        <entry key="..\:/Users/hp/AndroidStudioProjects/HelloScenform/app/src/main/res/layout/node_row_item.xml" value="0.1644021739130435" />
+        <entry key="..\:/Users/hp/AndroidStudioProjects/HelloScenform/app/src/main/res/layout/node_row_item.xml" value="0.33" />
         <entry key="..\:/Users/hp/AndroidStudioProjects/HelloScenform/app/src/main/res/layout/solar_controls.xml" value="0.18" />
       </map>
     </option>

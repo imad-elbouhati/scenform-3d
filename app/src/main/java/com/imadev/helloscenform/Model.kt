@@ -1,5 +1,12 @@
 package com.imadev.helloscenform
 
-import com.google.ar.sceneform.rendering.ModelRenderable
+import androidx.annotation.RawRes
 
-data class Model(val modelRenderable: ModelRenderable,val image:Int)
+data class Model(@RawRes val sbf: Int, val image: Int,var selected: Boolean = false) {
+
+
+    fun toggleSelected(): Model {
+        selected = !selected
+        return this
+    }
+}

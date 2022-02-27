@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
 
     <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:src=""
+        android:id="@+id/node_img"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_margin="10dp"
+        android:scaleType="fitXY"
+        tools:background="@drawable/border_drawble"
+        tools:src="@drawable/ic_launcher_background" />
 
-        />
 
-</com.google.android.material.card.MaterialCardView>
+</RelativeLayout>
+

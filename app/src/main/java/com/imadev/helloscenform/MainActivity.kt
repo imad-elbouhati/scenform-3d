@@ -3,30 +3,31 @@ package com.imadev.helloscenform
 import android.app.ActivityManager
 import android.content.Context
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.widget.Button
 import android.widget.Toast
+import androidx.annotation.RawRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.MutableLiveData
-import com.google.ar.core.Anchor
 import com.google.ar.core.HitResult
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.Node
+import com.google.ar.sceneform.collision.Box
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.ArFragment
 import com.google.ar.sceneform.ux.TransformableNode
-import kotlinx.coroutines.*
+import com.imadev.helloscenform.databinding.ActivityMainBinding
 import java.util.concurrent.CompletableFuture
 
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
 
     companion object {
         private val TAG = MainActivity::class.simpleName
@@ -34,15 +35,30 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private var buttonRenderable: ViewRenderable? = null
+    private val mModelList = mutableListOf<Model>(
+        Model(R.raw.chair, R.drawable.chair),
+        Model(R.raw.oven, R.drawable.oven),
+        Model(R.raw.piano, R.drawable.piano),
+        Model(R.raw.table, R.drawable.table),
+    )
+
+
+    private var mLastSelectedItem = -1
+
 
     private lateinit var arFragment: ArFragment
+
+
     private lateinit var andyRenderable: ModelRenderable
+    private lateinit var mSelectedRenderable: ModelRenderable
+    private var mButtonRenderable: ViewRenderable? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         if (!checkIsSupportedDeviceOrFinish(this)) return
 
@@ -53,13 +69,54 @@ class MainActivity : AppCompatActivity() {
 
         setUpRenderable()
 
+        setupRecycelerView()
+
         arFragment.setOnTapArPlaneListener { hitResult, plane, motionEvent ->
 
-            addNodeToScene(hitResult, andyRenderable)
+            if (!this::mSelectedRenderable.isInitialized) {
+                Toast.makeText(this, "Please select an object", Toast.LENGTH_SHORT).show()
+                return@setOnTapArPlaneListener
+            }
+            addNodeToScene(hitResult, mSelectedRenderable)
         }
 
 
     }
+
+    private fun setupRecycelerView() {
+        val adapter = ModelAdapter()
+
+        adapter.modelList = mModelList
+        binding.listView.adapter = adapter
+
+
+        adapter.setOnClickListener { it, pos ->
+
+
+            if (mLastSelectedItem != -1) {
+                mModelList[mLastSelectedItem] = mModelList[mLastSelectedItem].toggleSelected()
+                adapter.notifyItemChanged(mLastSelectedItem)
+            }
+
+
+            //Select new object
+
+            val selectedItem = mModelList[pos]
+            mModelList[pos] = selectedItem.toggleSelected()
+            adapter.notifyItemChanged(pos)
+
+            //Keep track of last selected object
+            mLastSelectedItem = pos
+
+            setUpRenderable(it.sbf)
+
+
+
+            Log.d(TAG, "setupRecycelerView: $mModelList")
+        }
+
+    }
+
 
     private fun setUpRenderable() {
         ModelRenderable.builder()
@@ -77,8 +134,25 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun setUpRenderable(@RawRes nodeId: Int) {
+        ModelRenderable.builder()
+            .setSource(this, nodeId)
+            .build()
+            .thenAccept { renderable ->
+                mSelectedRenderable = renderable
+            }.exceptionally { throwble ->
+                val toast =
+                    Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG)
+                toast.setGravity(Gravity.CENTER, 0, 0)
+                toast.show()
+                null
+            }
+
+    }
 
     private fun addNodeToScene(hitResult: HitResult, modelRenderable: ModelRenderable) {
+
+
         val anchor = hitResult.createAnchor()
         val anchorNode = AnchorNode(anchor)
         anchorNode.setParent(arFragment.arSceneView.scene)
@@ -90,7 +164,7 @@ class MainActivity : AppCompatActivity() {
         buttonNode.setParent(node)
 
         val buttonRenderable = createDeleteButtonRenderable()
-        if(buttonRenderable == null) {
+        if (buttonRenderable == null) {
             Toast.makeText(this, "Tap again", Toast.LENGTH_SHORT).show()
             return
         }
@@ -100,11 +174,16 @@ class MainActivity : AppCompatActivity() {
         node.select()
 
         buttonNode.renderable = buttonRenderable
-        buttonNode.localPosition = Vector3(0.0f, 0.25f, 0.0f)
+
+        val box = node.renderable?.collisionShape as Box
+
+        Log.d(TAG, "addNodeToScene: ${box.size.y}")
+
+        buttonNode.localPosition = Vector3(0.0f, box.size.y + 0.1f, 0.0f)
 
 
-        buttonRenderable?.view?.setOnClickListener {
-            Toast.makeText(this, "To delete", Toast.LENGTH_SHORT).show()
+        buttonRenderable.view?.setOnClickListener {
+
             node.setParent(null)
         }
 
@@ -135,7 +214,7 @@ class MainActivity : AppCompatActivity() {
                 return@handle
             }
 
-            buttonRenderable = buttonStage.get()
+            mButtonRenderable = buttonStage.get()
 
 
         }.exceptionally {
@@ -147,7 +226,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        return buttonRenderable
+        return mButtonRenderable
     }
 
 
